@@ -79,77 +79,79 @@ class _WalkthroughScreenState extends State<WalkthroughScreen> {
       child: Scaffold(
         backgroundColor: AppColors.cream,
         body: SafeArea(
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 430),
-              child: Column(
+          child: Column(
+            children: [
+              Align(
+                alignment: Alignment.centerRight,
+                child: Visibility(
+                  visible: !_isLast,
+                  maintainSize: true,
+                  maintainAnimation: true,
+                  maintainState: true,
+                  child: TextButton(
+                    onPressed: widget.onDone,
+                    style: TextButton.styleFrom(
+                      foregroundColor: AppColors.green,
+                    ),
+                    child: const Text('Skip'),
+                  ),
+                ),
+              ),
+              Expanded(
+                child: PageView.builder(
+                  controller: _pageController,
+                  itemCount: _pages.length,
+                  onPageChanged: (i) => setState(() => _index = i),
+                  // The page itself is full width; only its content is limited.
+                  itemBuilder: (_, i) => Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 430),
+                      child: _PageContent(_pages[i]),
+                    ),
+                  ),
+                ),
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: Visibility(
-                      visible: !_isLast,
-                      maintainSize: true,
-                      maintainAnimation: true,
-                      maintainState: true,
-                      child: TextButton(
-                        onPressed: widget.onDone,
-                        style: TextButton.styleFrom(
-                          foregroundColor: AppColors.green,
-                        ),
-                        child: const Text('Skip'),
+                  for (var i = 0; i < _pages.length; i++)
+                    AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      margin: const EdgeInsets.symmetric(horizontal: 3),
+                      width: i == _index ? 22 : 8,
+                      height: 8,
+                      decoration: BoxDecoration(
+                        color: i == _index ? AppColors.green : AppColors.border,
+                        borderRadius: BorderRadius.circular(4),
                       ),
                     ),
-                  ),
-                  Expanded(
-                    child: PageView.builder(
-                      controller: _pageController,
-                      itemCount: _pages.length,
-                      onPageChanged: (i) => setState(() => _index = i),
-                      itemBuilder: (_, i) => _PageContent(_pages[i]),
-                    ),
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      for (var i = 0; i < _pages.length; i++)
-                        AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
-                          margin: const EdgeInsets.symmetric(horizontal: 3),
-                          width: i == _index ? 22 : 8,
-                          height: 8,
-                          decoration: BoxDecoration(
-                            color: i == _index
-                                ? AppColors.green
-                                : AppColors.border,
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                        ),
-                    ],
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 20, 16, 16),
-                    child: SizedBox(
-                      width: double.infinity,
-                      height: 48,
-                      child: FilledButton(
-                        onPressed: _next,
-                        style: FilledButton.styleFrom(
-                          backgroundColor: AppColors.green,
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                        ),
-                        child: Text(
-                          _isLast ? 'Get started' : 'Next',
-                          style: AppText.button,
-                        ),
-                      ),
-                    ),
-                  ),
                 ],
               ),
-            ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 20, 16, 16),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 430),
+                  child: SizedBox(
+                    width: double.infinity,
+                    height: 48,
+                    child: FilledButton(
+                      onPressed: _next,
+                      style: FilledButton.styleFrom(
+                        backgroundColor: AppColors.green,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                      ),
+                      child: Text(
+                        _isLast ? 'Get started' : 'Next',
+                        style: AppText.button,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),
