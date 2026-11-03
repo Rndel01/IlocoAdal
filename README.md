@@ -16,9 +16,9 @@ You can choose how many key terms to find (10 to 40, default 15). With several f
 
 ## What's inside
 
-| Part | What it does |
-| --- | --- |
-| Flutter app (`lib/`) | The screens: upload, ready to process, processing, results and error screens |
+| Part                       | What it does                                                                                                      |
+| -------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| Flutter app (`lib/`)       | The screens: upload, ready to process, processing, results and error screens                                      |
 | Python engine (`backend/`) | Does all the processing: reading PDFs, ranking terms, fetching definitions, translating and building the document |
 
 The engine runs as a small local server on the device, and the app talks to it. On Android it runs inside the app itself.
@@ -33,4 +33,3 @@ The engine runs as a small local server on the device, and the app talks to it. 
 - PDF only. Scanned pages (images) are not supported.
 - English text only.
 - The Free Dictionary API has no entry for most phrases, so those show "Definition not available".
-- Support for Ilocano in Google Translate has not been verified yet.
