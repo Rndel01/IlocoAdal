@@ -29,7 +29,14 @@ def request_json(
     last: Optional[Exception] = None
     for attempt in range(max_retries):
         try:
-            req = request.Request(url, data=body, headers={"Accept": "application/json"})
+            req = request.Request(
+                url,
+                data=body,
+                headers={
+                    "Accept": "application/json",
+                    "User-Agent": "Mozilla/5.0 (compatible; IlocoAdal/0.8; school project)",
+                },
+            )
             with request.urlopen(req, timeout=timeout) as resp:
                 return json.loads(resp.read().decode("utf-8"))
         except error.HTTPError as exc:  # must come before URLError / OSError
