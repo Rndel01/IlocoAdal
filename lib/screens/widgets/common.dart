@@ -4,6 +4,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../walkthrough_screen.dart';
+
 import '../../theme/app_theme.dart';
 
 /// The screen frame: green header on top, cream page below.
@@ -95,6 +97,7 @@ class AppHeader extends StatelessWidget {
   }
 
   void _showHelp(BuildContext context) {
+    final outer = context;
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
@@ -152,6 +155,22 @@ class AppHeader extends StatelessWidget {
             const _HelpTip('Scanned PDFs (pictures of pages) can\'t be read.'),
             const _HelpTip(
               'Phrases often have no dictionary definition. Those show "Definition not available".',
+            ),
+            const SizedBox(height: 8),
+            TextButton.icon(
+              onPressed: () {
+                Navigator.pop(context); // close the Help sheet
+                Navigator.of(outer).push(
+                  MaterialPageRoute<void>(
+                    builder: (routeContext) => WalkthroughScreen(
+                      onDone: () => Navigator.of(routeContext).pop(),
+                    ),
+                  ),
+                );
+              },
+              style: TextButton.styleFrom(foregroundColor: AppColors.green),
+              icon: const Icon(Icons.slideshow_outlined),
+              label: const Text('Show the walkthrough again'),
             ),
           ],
         ),
