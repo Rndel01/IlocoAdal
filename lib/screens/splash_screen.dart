@@ -64,8 +64,8 @@ class _SplashScreenState extends State<SplashScreen>
                   scale: _logoScale,
                   child: Image.asset(
                     'assets/icon/icon_foreground.png',
-                    width: 220,
-                    height: 220,
+                    width: 300,
+                    height: 300,
                   ),
                 ),
               ),
