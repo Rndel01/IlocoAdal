@@ -1,0 +1,77 @@
+{
+  "_comment": "Only keys you change are needed; anything missing uses its default. Keys starting with _ are ignored.",
+  "files": {
+    "max_file_size_mb": 20.0,
+    "max_files": 10,
+    "allowed_extensions": [
+      ".pdf"
+    ],
+    "output_dir": "",
+    "output_suffix": "_key_terms",
+    "combined_name": "combined"
+  },
+  "text": {
+    "min_word_length": 3,
+    "extra_filler_words": [],
+    "extra_abbreviations": [],
+    "normalizer": "lemmatizer",
+    "language": "en",
+    "skip_patterns": [
+      "^\\s*(?:source|sources|reference|references|retrieved)\\b",
+      "\\(\\d{4}[a-z]?\\)"
+    ],
+    "strip_patterns": [
+      "https?://\\S+",
+      "\\bwww\\.\\S+",
+      "\\S+@\\S+\\.\\S+"
+    ],
+    "drop_repeated_lines_min": 3
+  },
+  "analysis": {
+    "top_n": 20,
+    "max_contexts": 2,
+    "context_min_length": 40,
+    "context_max_length": 300,
+    "heading_form": "lemma",
+    "max_phrase_words": 3,
+    "min_phrase_count": 2,
+    "phrase_cohesion": 0.15,
+    "phrase_boost": 1.5,
+    "review_terms": false,
+    "ask_when_offline": true
+  },
+  "dictionary": {
+    "enabled": true,
+    "api_url": "https://api.dictionaryapi.dev/api/v2/entries",
+    "language": "en",
+    "max_retries": 3,
+    "max_definitions": 3,
+    "timeout_seconds": 10.0,
+    "retry_backoff_seconds": 1.0
+  },
+  "translation": {
+    "enabled": true,
+    "api_url": "https://translation.googleapis.com/language/translate/v2",
+    "api_key": "",
+    "api_key_env": "GOOGLE_TRANSLATE_API_KEY",
+    "source_language": "en",
+    "target_language": "ilo",
+    "max_retries": 3,
+    "timeout_seconds": 10.0,
+    "retry_backoff_seconds": 1.0
+  },
+  "document": {
+    "title": "Key terms",
+    "include_definitions": true,
+    "include_context": true,
+    "include_translations": true,
+    "bold_matches": true
+  },
+  "server": {
+    "host": "127.0.0.1",
+    "port": 8765,
+    "auth_token": "",
+    "allow_origin": "",
+    "job_ttl_minutes": 60.0
+  }
+}
