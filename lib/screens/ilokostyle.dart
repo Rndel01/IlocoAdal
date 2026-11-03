@@ -10,6 +10,7 @@ import 'ready_screen.dart';
 import 'results_screen.dart';
 import 'upload_screen.dart';
 import 'widgets/common.dart';
+import 'launch_gate.dart';
 
 /// The app. main.dart runs this, as before.
 class IlokoStyleApp extends StatefulWidget {
@@ -59,7 +60,10 @@ class _IlokoStyleAppState extends State<IlokoStyleApp> {
           child: child!,
         );
       },
-      home: AppRoot(controller: _controller),
+      home: LaunchGate(
+        controller: _controller,
+        app: AppRoot(controller: _controller),
+      ),
     );
   }
 }
