@@ -21,6 +21,7 @@ class DefinitionFetcher:
         timeout: float = 10.0,
         backoff: float = 1.0,
     ) -> None:
+        self._cache: dict[str, list[str]] = {}
         self.api_url = api_url.rstrip("/")
         self.max_retries = max_retries
         self.max_definitions = max_definitions
@@ -37,10 +38,14 @@ class DefinitionFetcher:
         """Up to `max_definitions` definitions, e.g. "(noun) A living thing...".
         Returns [NOT_AVAILABLE] when the dictionary has no entry.
         Raises ApiUnavailableError when the service can't be reached."""
-        url = f"{self.api_url}/{quote(self.language)}/{quote(word.strip().lower())}"
+        key = word.strip().lower()
+        if key in self._cache:
+            return list(self._cache[key])
+        url = f"{self.api_url}/{quote(self.language)}/{quote(key)}"
         try:
             data = self._request(url)
         except ApiNotFoundError:
+            self._cache[key] = [NOT_AVAILABLE]
             return [NOT_AVAILABLE]
 
         found: list[str] = []
@@ -52,4 +57,6 @@ class DefinitionFetcher:
                     text = (item.get("definition") or "").strip()
                     if text:
                         found.append(f"({pos}) {text}" if pos else text)
-        return found[: self.max_definitions] or [NOT_AVAILABLE]
+        result = found[: self.max_definitions] or [NOT_AVAILABLE]
+        self._cache[key] = result
+        return list(result)

@@ -18,39 +18,72 @@ import '../app_config.dart';
 /// `--dart-define=ILOCOADAL_EMBEDDED=false`.
 class EngineLauncher {
   static const int port = 8765;
-  static const _embeddedFlag = bool.fromEnvironment('ILOCOADAL_EMBEDDED', defaultValue: true);
+  static const _embeddedFlag = bool.fromEnvironment(
+    'ILOCOADAL_EMBEDDED',
+    defaultValue: true,
+  );
 
-  static bool get isEmbedded => _embeddedFlag && (Platform.isAndroid || Platform.isIOS);
+  static bool get isEmbedded =>
+      _embeddedFlag && (Platform.isAndroid || Platform.isIOS);
   static String get baseUrl => 'http://127.0.0.1:$port';
 
-  /// New on every launch, so other apps on the phone can't talk to the engine.
-  static final String token = _randomToken();
+  /// Made once, then reused on every launch (saved in the app's private folder).
+  static String token = '';
 
   static bool _started = false;
 
   /// Starts the engine and returns once it answers. Throws an
   /// [IlocoAdalException] (code engine_down) if it doesn't come up.
   static Future<void> start() async {
-    if (!_started) {
-      final docs = await getApplicationDocumentsDirectory();
-      final out = Directory('${docs.path}${Platform.pathSeparator}IlocoAdal')
-        ..createSync(recursive: true);
-      final support = await getApplicationSupportDirectory();
-      final configFile = File('${support.path}${Platform.pathSeparator}ilocoadal_config.json');
-      await configFile.writeAsString(jsonEncode({
-        'files': {'output_dir': out.path}, // where finished documents are saved
-        'server': {'port': port, 'auth_token': token},
-        if (AppConfig.googleKey.isNotEmpty) 'translation': {'api_key': AppConfig.googleKey},
-      }));
+    final support = await getApplicationSupportDirectory();
+    final sep = Platform.pathSeparator;
 
-      // Runs main.py in a background thread; it keeps running while the app is open.
-      unawaited(SeriousPython.run(
-        appFileName: 'main.py',
-        environmentVariables: {'ILOCOADAL_CONFIG': configFile.path},
-      ).catchError((Object e) => null));
+    // Same token on every launch, so an engine Android kept alive still matches.
+    final tokenFile = File('${support.path}${sep}ilocoadal_token');
+    if (token.isEmpty && tokenFile.existsSync()) {
+      token = (await tokenFile.readAsString()).trim();
+    }
+    if (token.isEmpty) {
+      token = _randomToken();
+      await tokenFile.writeAsString(token);
+    }
+
+    if (!_started) {
+      // The engine may still be running from the last time the app was open.
+      if (!await _isUp()) {
+        final docs = await getApplicationDocumentsDirectory();
+        final out = Directory('${docs.path}${sep}IlocoAdal')
+          ..createSync(recursive: true);
+        final configFile = File('${support.path}${sep}ilocoadal_config.json');
+        await configFile.writeAsString(
+          jsonEncode({
+            'files': {'output_dir': out.path},
+            'server': {'port': port, 'auth_token': token},
+            if (AppConfig.googleKey.isNotEmpty)
+              'translation': {'api_key': AppConfig.googleKey},
+          }),
+        );
+        unawaited(
+          SeriousPython.run(
+            appFileName: 'main.py',
+            environmentVariables: {'ILOCOADAL_CONFIG': configFile.path},
+          ).catchError((Object e) => null),
+        );
+      }
       _started = true;
     }
     await _waitUntilUp();
+  }
+
+  static Future<bool> _isUp() async {
+    try {
+      final r = await http
+          .get(Uri.parse('$baseUrl/health'))
+          .timeout(const Duration(seconds: 2));
+      return r.statusCode == 200;
+    } catch (_) {
+      return false;
+    }
   }
 
   static Future<void> _waitUntilUp() async {

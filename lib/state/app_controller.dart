@@ -200,12 +200,16 @@ class AppController extends ChangeNotifier {
     notifyListeners();
     File? temp;
     try {
+      // "<original name>_ilocoadal_2026-11-03.docx"
+      final now = DateTime.now();
+      final date =
+          '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
       final String name;
       if (files.length == 1) {
         final base = files.first.name.replaceFirst(RegExp(r'\.[^./\\]+$'), '');
-        name = '${base}_ilocoadal.docx';
+        name = '${base}_ilocoadal_$date.docx';
       } else {
-        name = 'combined_ilocoadal.docx';
+        name = 'combined_ilocoadal_$date.docx';
       }
       // 1. Download into a temporary file.
       final tmpDir = await getTemporaryDirectory();

@@ -6,10 +6,29 @@ from pathlib import Path
 from typing import Optional
 
 from docx import Document
+from docx.oxml.ns import qn
+from docx.shared import RGBColor
 
 from .models import Term
 from .textutil import forms_pattern
 
+GREEN = RGBColor(0x1B, 0x5E, 0x3B)
+
+
+def _apply_colors(doc) -> None:
+    """Recolor the title and headings, including the line under the title."""
+    for name in ("Title", "Heading 1", "Heading 2", "Heading 3"):
+        try:
+            doc.styles[name].font.color.rgb = GREEN
+        except KeyError:
+            pass
+    try:
+        for edge in doc.styles["Title"].element.iter(qn("w:bottom")):
+            edge.set(qn("w:color"), "1B5E3B")
+            for attr in ("w:themeColor", "w:themeShade", "w:themeTint"):
+                edge.attrib.pop(qn(attr), None)
+    except KeyError:
+        pass
 
 class DocumentBuilder:
     """Writes the annotated document (.docx) in two steps:
@@ -39,6 +58,7 @@ class DocumentBuilder:
     def build_document(self, terms: list[Term], source_name: str) -> None:
         self.terms = list(terms)
         doc = Document()
+        _apply_colors(doc)
         doc.add_heading(self.title, level=0)
         doc.add_paragraph(f"Source: {source_name}  |  {len(terms)} key terms")
 
@@ -68,7 +88,9 @@ class DocumentBuilder:
     def _section(doc, label: str, items: list[str]) -> None:
         if not items:
             return
-        doc.add_paragraph().add_run(label).bold = True
+        run = doc.add_paragraph().add_run(label)
+        run.bold = True
+        run.font.color.rgb = GREEN
         for item in items:
             doc.add_paragraph(item, style="List Bullet")
 
@@ -76,7 +98,9 @@ class DocumentBuilder:
     def _context(doc, term: Term, bold: bool = True) -> None:
         if not term.contexts:
             return
-        doc.add_paragraph().add_run("Context").bold = True
+        run = doc.add_paragraph().add_run("Context")
+        run.bold = True
+        run.font.color.rgb = GREEN
         pattern = forms_pattern([term.word, *term.variants])
         for sentence in term.contexts:
             para = doc.add_paragraph(style="List Bullet")

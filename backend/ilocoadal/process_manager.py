@@ -1,6 +1,8 @@
 """Controller: runs the use cases in order (see the UCD) and reports progress."""
 from __future__ import annotations
 
+from concurrent.futures import ThreadPoolExecutor
+
 import re
 import threading
 from collections import Counter
@@ -281,19 +283,33 @@ class ProcessManager:
                 return result
         return [NOT_AVAILABLE]
 
+    DEFINITION_WORKERS = 6      # lookups running at the same time
+
+    def _lookup_one(self, term: Term, stop: threading.Event):
+        """Runs in a worker thread. Returns the error, or None if it worked."""
+        if stop.is_set() or self.cancel_event.is_set():
+            return None
+        try:
+            term.definitions = self._lookup(term)
+        except ApiError as exc:
+            stop.set()                      # no point trying the rest
+            return exc
+        return None
+
     def _fetch_definitions(self, analysis: AnalysisResult, strict: bool = False) -> None:
-        for term in analysis.selected_terms():
-            self._check_cancel()
-            if term.definitions:
-                continue
-            try:
-                term.definitions = self._lookup(term)
-            except ApiError:
-                if strict:
-                    raise
-                self._warn(analysis, "no_internet",
-                           "No internet connection. Definitions were left out.")
-                return
+        todo = [t for t in analysis.selected_terms() if not t.definitions]
+        if not todo:
+            return
+        self._check_cancel()
+        stop = threading.Event()
+        with ThreadPoolExecutor(max_workers=self.DEFINITION_WORKERS) as pool:
+            errors = [e for e in pool.map(lambda t: self._lookup_one(t, stop), todo) if e]
+        self._check_cancel()
+        if errors:
+            if strict:
+                raise errors[0]
+            self._warn(analysis, "no_internet",
+                       "No internet connection. Definitions were left out.")
 
     def _translate(self, analysis: AnalysisResult, strict: bool = False) -> None:
         if not self.translator.is_configured:
