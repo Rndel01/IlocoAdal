@@ -95,22 +95,66 @@ class AppHeader extends StatelessWidget {
   }
 
   void _showHelp(BuildContext context) {
-    showDialog<void>(
+    showModalBottomSheet<void>(
       context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('How it works'),
-        content: const Text(
-          '1. Upload one or more PDF files.\n'
-          '2. IlocoAdal finds the key terms and a sentence for each.\n'
-          '3. With an internet connection it adds definitions and translations.\n'
-          '4. Download the finished document.',
+      isScrollControlled: true,
+      backgroundColor: AppColors.cream,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (_) => DraggableScrollableSheet(
+        expand: false,
+        initialChildSize: 0.75,
+        maxChildSize: 0.95,
+        builder: (context, scroll) => ListView(
+          controller: scroll,
+          padding: const EdgeInsets.fromLTRB(20, 14, 20, 24),
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: AppColors.border,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text('How it works', style: AppText.title),
+            const SizedBox(height: 14),
+            const _HelpStep(
+              1,
+              'Upload',
+              'Pick one or more PDF files. Several files are combined into one document.',
+            ),
+            const _HelpStep(
+              2,
+              'Choose the number of terms',
+              'Use the slider (10 to 40), then tap Start Processing.',
+            ),
+            const _HelpStep(
+              3,
+              'Wait a moment',
+              'IlocoAdal finds the key terms, a sentence for each, then adds definitions and Ilocano translations.',
+            ),
+            const _HelpStep(
+              4,
+              'Download',
+              'Tap Download Document and choose where to save the Word file.',
+            ),
+            const SizedBox(height: 8),
+            Text('Good to know', style: AppText.title.copyWith(fontSize: 15)),
+            const SizedBox(height: 10),
+            const _HelpTip(
+              'Definitions and translations need an internet connection. If it drops, you can try again or continue without them.',
+            ),
+            const _HelpTip('Scanned PDFs (pictures of pages) can\'t be read.'),
+            const _HelpTip(
+              'Phrases often have no dictionary definition. Those show "Definition not available".',
+            ),
+          ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('OK'),
-          ),
-        ],
       ),
     );
   }
@@ -318,4 +362,63 @@ class DashedRRectPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant DashedRRectPainter old) => old.color != color;
+}
+
+class _HelpStep extends StatelessWidget {
+  const _HelpStep(this.number, this.title, this.text);
+  final int number;
+  final String title, text;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.only(bottom: 12),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        CircleAvatar(
+          radius: 12,
+          backgroundColor: AppColors.green,
+          child: Text(
+            '$number',
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: AppText.body.copyWith(fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(height: 2),
+              Text(text, style: AppText.body),
+            ],
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+class _HelpTip extends StatelessWidget {
+  const _HelpTip(this.text);
+  final String text;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.only(bottom: 8),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('•  ', style: AppText.body),
+        Expanded(child: Text(text, style: AppText.body)),
+      ],
+    ),
+  );
 }
