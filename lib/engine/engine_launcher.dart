@@ -59,8 +59,11 @@ class EngineLauncher {
           jsonEncode({
             'files': {'output_dir': out.path},
             'server': {'port': port, 'auth_token': token},
-            if (AppConfig.googleKey.isNotEmpty)
-              'translation': {'api_key': AppConfig.googleKey},
+            'analysis': {'heading_form': 'lemma'},
+            'dictionary': {'max_retries': 2, 'timeout_seconds': 6.0},
+            'translation': AppConfig.googleKey.isNotEmpty
+                ? {'api_key': AppConfig.googleKey}
+                : {'enabled': false},
           }),
         );
         unawaited(
