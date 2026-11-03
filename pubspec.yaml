@@ -57,8 +57,17 @@ dev_dependencies:
 
 flutter_launcher_icons:
   android: true
-  iOS: true
+  ios: true
   image_path: "assets/icon/icon.png"
+  remove_alpha_ios: true
+  adaptive_icon_background: "#F6F4ED"
+  adaptive_icon_foreground: "assets/icon/icon_foreground.png"
+  adaptive_icon_monochrome: "assets/icon/icon_foreground.png"
+
+flutter_native_splash:
+  color: "#F6F4ED"
+  android_12:
+    color: "#F6F4ED"
 
 # The following section is specific to Flutter packages.
 flutter:
