@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from concurrent.futures import ThreadPoolExecutor
 
+import time
 import re
 import threading
 from collections import Counter
@@ -283,33 +284,56 @@ class ProcessManager:
                 return result
         return [NOT_AVAILABLE]
 
-    DEFINITION_WORKERS = 6      # lookups running at the same time
+    DEFINITION_WORKERS = 2      # lookups at the same time (the free service limits bursts)
 
-    def _lookup_one(self, term: Term, stop: threading.Event):
-        """Runs in a worker thread. Returns the error, or None if it worked."""
-        if stop.is_set() or self.cancel_event.is_set():
+    def _run_lookups(self, terms: list[Term], workers: int):
+        """Look up `terms`. Returns the first error seen, or None."""
+        stop = threading.Event()
+        lock = threading.Lock()
+        tally = {"ok": 0, "bad": 0}
+
+        def one(term: Term):
+            if stop.is_set() or self.cancel_event.is_set():
+                return None
+            try:
+                term.definitions = self._lookup(term)
+            except ApiError as exc:
+                with lock:
+                    tally["bad"] += 1
+                    if tally["ok"] == 0 and tally["bad"] >= 3:
+                        stop.set()      # nothing has worked yet: probably offline
+                return exc
+            with lock:
+                tally["ok"] += 1
             return None
-        try:
-            term.definitions = self._lookup(term)
-        except ApiError as exc:
-            stop.set()                      # no point trying the rest
-            return exc
-        return None
+
+        with ThreadPoolExecutor(max_workers=workers) as pool:
+            errors = [e for e in pool.map(one, terms) if e]
+        return errors[0] if errors else None
 
     def _fetch_definitions(self, analysis: AnalysisResult, strict: bool = False) -> None:
         todo = [t for t in analysis.selected_terms() if not t.definitions]
         if not todo:
             return
         self._check_cancel()
-        stop = threading.Event()
-        with ThreadPoolExecutor(max_workers=self.DEFINITION_WORKERS) as pool:
-            errors = [e for e in pool.map(lambda t: self._lookup_one(t, stop), todo) if e]
+        error = self._run_lookups(todo, self.DEFINITION_WORKERS)
+        missing = [t for t in todo if not t.definitions]
+        if missing and len(missing) < len(todo):
+            # Some worked, so the connection is fine: retry the rest slowly, one at a time.
+            time.sleep(2)
+            self._run_lookups(missing, 1)
+            missing = [t for t in todo if not t.definitions]
         self._check_cancel()
-        if errors:
-            if strict:
-                raise errors[0]
+        if not missing:
+            return
+        if len(missing) == len(todo):           # nothing worked: really offline
+            if strict and error:
+                raise error
             self._warn(analysis, "no_internet",
                        "No internet connection. Definitions were left out.")
+        else:                                   # a few failed: don't blame the connection
+            self._warn(analysis, "definitions_partial",
+                       f"{len(missing)} definitions couldn't be fetched.")
 
     def _translate(self, analysis: AnalysisResult, strict: bool = False) -> None:
         if not self.translator.is_configured:
