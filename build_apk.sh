@@ -15,7 +15,7 @@ export SERIOUS_PYTHON_SITE_PACKAGES="$(pwd)/build/py_site_packages"
 export SERIOUS_PYTHON_APP="$(pwd)/build/py_app"
 # python-docx and simplemma open their data files by path, which can't work
 # from inside a zip, so they are unpacked to disk when the app first starts.
-export SERIOUS_PYTHON_ANDROID_EXTRACT_PACKAGES="docx,simplemma"
+export SERIOUS_PYTHON_ANDROID_EXTRACT_PACKAGES="docx,simplemma,certifi"
 
 echo "==> Copying the engine into python_app/"
 rm -rf python_app/ilocoadal

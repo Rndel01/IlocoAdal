@@ -7,6 +7,12 @@ for as long as the app is open.
 import os
 import sys
 
+try:
+    import certifi # type: ignore
+    os.environ.setdefault("SSL_CERT_FILE", certifi.where())
+except Exception:
+    pass
+
 from ilocoadal.server import main
 
 if __name__ == "__main__":
