@@ -22,6 +22,12 @@ def _noisy(s: str) -> bool:
     words = s.split()
     return len(words) >= 6 and sum(len(w) == 1 for w in words) > 0.4 * len(words)
 
+_CODE = re.compile(r"[a-z]{2,}_[a-z]{2,}|/\*|\*/|\);|\)\s*\{|\bvoid\s+\*?\w+\(")
+
+
+def _is_code(s: str) -> bool:
+    return bool(_CODE.search(s))
+
 class TextAnalyzer:
     """Ranks terms with TF-IDF and finds the sentences they appear in.
 

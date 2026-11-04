@@ -26,6 +26,9 @@ _FUNCTION_WORDS = frozenset(
 # (so "use case" can be found even though "use" is generic).
 GENERIC_WORDS = frozenset(
     """
+    time times step steps round rounds number numbers
+    exist exists existed existing require requires required requiring
+    available group groups
     show shows shown showing showed give gives given giving gave let
     find finds found finding follow follows followed following
     example examples exercise exercises least less chapter chapters
