@@ -32,7 +32,6 @@ _STEREO = re.compile(r"<<|>>|«|»")
 
 
 def _is_sentence(s: str) -> bool:
-    """Slide labels like "Track Order" or "<<access>>" are not sentences."""
     words = s.split()
     if len(words) < 5 or _STEREO.search(s):
         return False
