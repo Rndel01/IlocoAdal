@@ -7,13 +7,18 @@ from typing import Optional
 
 from docx import Document
 from docx.oxml.ns import qn
-from docx.shared import RGBColor
+from docx.shared import Pt, RGBColor
 
 from .models import Term
 from .textutil import forms_pattern
 
 GREEN = RGBColor(0x1B, 0x5E, 0x3B)
-
+LABEL_COLORS = {
+    "Definition": RGBColor(0x2E, 0x7D, 0x32),             # leaf green
+    "Context": RGBColor(0x7A, 0x8F, 0x1A),                # olive green
+    "Translated definition": RGBColor(0x00, 0x79, 0x6B),  # teal green
+    "Translated context": RGBColor(0x0B, 0x4F, 0x3A),     # deep forest green
+}
 
 def _apply_colors(doc) -> None:
     """Recolor the title and headings, including the line under the title."""
