@@ -279,7 +279,7 @@ class ProcessManager:
     def _lookup(self, term: Term) -> list[str]:
         forms = [term.word] + sorted(term.variants, key=len)[:1]  # e.g. plants, plant
         for form in forms:
-            result = self.fetcher.get_definition(form)
+            result = self.fetcher.get_definition(form, " ".join(term.contexts))
             if result != [NOT_AVAILABLE]:
                 return result
         return [NOT_AVAILABLE]
