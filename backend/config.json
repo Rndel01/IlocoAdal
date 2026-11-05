@@ -45,7 +45,7 @@
     "api_url": "https://api.dictionaryapi.dev/api/v2/entries",
     "language": "en",
     "max_retries": 3,
-    "max_definitions": 3,
+    "max_definitions": 2,
     "timeout_seconds": 10.0,
     "retry_backoff_seconds": 1.0
   },

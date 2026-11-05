@@ -20,7 +20,13 @@ LABEL_COLORS = {
     "Translated context": RGBColor(0x0B, 0x4F, 0x3A),     # deep forest green
 }
 
+
+
 def _apply_colors(doc) -> None:
+    doc.styles["Normal"].font.size = Pt(10)
+    doc.styles["List Bullet"].font.size = Pt(10)
+    doc.styles["Heading 2"].font.size = Pt(15)
+
     """Recolor the title and headings, including the line under the title."""
     for name in ("Title", "Heading 1", "Heading 2", "Heading 3"):
         try:
@@ -95,7 +101,7 @@ class DocumentBuilder:
             return
         run = doc.add_paragraph().add_run(label)
         run.bold = True
-        run.font.color.rgb = GREEN
+        run.font.color.rgb = LABEL_COLORS[label]
         for item in items:
             doc.add_paragraph(item, style="List Bullet")
 
@@ -105,7 +111,7 @@ class DocumentBuilder:
             return
         run = doc.add_paragraph().add_run("Context")
         run.bold = True
-        run.font.color.rgb = GREEN
+        run.font.color.rgb = LABEL_COLORS["Context"]
         pattern = forms_pattern([term.word, *term.variants])
         for sentence in term.contexts:
             para = doc.add_paragraph(style="List Bullet")
