@@ -1,5 +1,6 @@
-"""UCD: "Fetch definitions" (secondary actor: Free Dictionary API)."""
 from __future__ import annotations
+
+import re
 
 from typing import Optional
 from urllib.parse import quote
@@ -10,6 +11,13 @@ from .models import NOT_AVAILABLE
 
 DEFAULT_API_URL = "https://api.dictionaryapi.dev/api/v2/entries"
 
+_WORD = re.compile(r"[a-z]{4,}")
+_SKIP = frozenset("that this with which from have used their them into such than also other some being".split())
+
+
+def _bag(text: str) -> set[str]:
+    """Word beginnings (5 letters), so thread / threads match."""
+    return {w[:5] for w in _WORD.findall(text.lower()) if w not in _SKIP}
 
 class DefinitionFetcher:
     def __init__(
@@ -34,29 +42,32 @@ class DefinitionFetcher:
             url, max_retries=self.max_retries, timeout=self.timeout, backoff=self.backoff
         )
 
-    def get_definition(self, word: str) -> list[str]:
-        """Up to `max_definitions` definitions, e.g. "(noun) A living thing...".
+    def get_definition(self, word: str, hint: str = "") -> list[str]:
+        """Up to `max_definitions` definitions, best match with `hint` first.
         Returns [NOT_AVAILABLE] when the dictionary has no entry.
         Raises ApiUnavailableError when the service can't be reached."""
         key = word.strip().lower()
-        if key in self._cache:
-            return list(self._cache[key])
-        url = f"{self.api_url}/{quote(self.language)}/{quote(key)}"
-        try:
-            data = self._request(url)
-        except ApiNotFoundError:
-            self._cache[key] = [NOT_AVAILABLE]
-            return [NOT_AVAILABLE]
-
-        found: list[str] = []
-        entries = data if isinstance(data, list) else []
-        for entry in entries:
-            for meaning in entry.get("meanings", []):
-                pos = meaning.get("partOfSpeech", "")
-                for item in meaning.get("definitions", []):
-                    text = (item.get("definition") or "").strip()
-                    if text:
-                        found.append(f"({pos}) {text}" if pos else text)
-        result = found[: self.max_definitions] or [NOT_AVAILABLE]
-        self._cache[key] = result
-        return list(result)
+        if key not in self._cache:
+            url = f"{self.api_url}/{quote(self.language)}/{quote(key)}"
+            try:
+                data = self._request(url)
+            except ApiNotFoundError:
+                self._cache[key] = [NOT_AVAILABLE]
+                return [NOT_AVAILABLE]
+            found: list[str] = []
+            entries = data if isinstance(data, list) else []
+            for entry in entries:
+                for meaning in entry.get("meanings", []):
+                    pos = meaning.get("partOfSpeech", "")
+                    for item in meaning.get("definitions", []):
+                        text = (item.get("definition") or "").strip()
+                        if text:
+                            found.append(f"({pos}) {text}" if pos else text)
+            self._cache[key] = found or [NOT_AVAILABLE]
+        senses = self._cache[key]
+        if senses == [NOT_AVAILABLE]:
+            return list(senses)
+        if hint:
+            bag = _bag(hint)
+            senses = sorted(senses, key=lambda s: -len(bag & _bag(s)))  # ties keep dictionary order
+        return senses[: self.max_definitions]
