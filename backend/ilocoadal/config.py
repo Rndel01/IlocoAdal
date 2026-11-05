@@ -64,7 +64,7 @@ class DictionaryConfig:
     api_url: str = "https://api.dictionaryapi.dev/api/v2/entries"
     language: str = "en"
     max_retries: int = 3
-    max_definitions: int = 3
+    max_definitions: int = 2
     timeout_seconds: float = 10.0
     retry_backoff_seconds: float = 1.0
 
