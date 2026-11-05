@@ -24,6 +24,7 @@ from .text_translator import TextTranslator
 from .textutil import forms_pattern
 
 ProgressCallback = Callable[[int, int, str], None]  # (step, total, label)
+_TAG = re.compile(r"^(\([a-z ]+\)\s*)(.*)$", re.S)   # "(noun) " in front of a definition
 ReviewCallback = Callable[[AnalysisResult], None]   # may edit analysis.terms
 
 # Step keys, in order, with the wording used on the Processing screen.
@@ -111,6 +112,7 @@ class ProcessManager:
         self.cancel_event = threading.Event()
         self.file_name = ""
         self.terms: list[Term] = []
+        self._hints: dict[str, str] = {}
         self.last_analysis: Optional[AnalysisResult] = None
 
     # -- helpers -----------------------------------------------------------
@@ -212,6 +214,11 @@ class ProcessManager:
         self._report(on_progress, "contexts")                # UCD: context sentences
         terms = self.analyzer.select_terms(ranked, sentences, sentence_stems)
 
+        self._hints = {
+            t.stem: " ".join([s for s, ks in zip(sentences, sentence_stems) if t.stem in ks][:10])
+            for t in terms
+        }
+
         names = [name for name, _ in texts]
         analysis = AnalysisResult(
             ", ".join(names), sentences, sentence_tokens, sentence_stems, terms,
@@ -280,6 +287,8 @@ class ProcessManager:
         forms = [term.word] + sorted(term.variants, key=len)[:1]  # e.g. plants, plant
         for form in forms:
             result = self.fetcher.get_definition(form, " ".join(term.contexts))
+            hint = self._hints.get(term.stem) or " ".join(term.contexts)
+            result = self.fetcher.get_definition(form, hint)
             if result != [NOT_AVAILABLE]:
                 return result
         return [NOT_AVAILABLE]
@@ -345,7 +354,12 @@ class ProcessManager:
             if term.translated_contexts or term.translated_definitions:
                 continue
             definitions = [d for d in term.definitions if d != NOT_AVAILABLE]
-            texts = term.contexts + definitions
+            tags, bodies = [], []
+            for d in definitions:
+                m = _TAG.match(d)
+                tags.append(m.group(1) if m else "")
+                bodies.append(m.group(2) if m else d)
+            texts = term.contexts + bodies
             if not texts:
                 continue
             try:
@@ -358,7 +372,7 @@ class ProcessManager:
                 return
             n = len(term.contexts)
             term.translated_contexts = out[:n]
-            term.translated_definitions = out[n:]
+            term.translated_definitions = [t + o for t, o in zip(tags, out[n:])]
 
     # -- phase 3: build the document ------------------------------------------
     def default_output_path(self, source_names: str | list[str]) -> Path:
