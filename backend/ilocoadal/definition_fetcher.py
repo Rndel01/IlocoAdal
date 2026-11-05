@@ -16,7 +16,7 @@ class DefinitionFetcher:
         self,
         api_url: str = DEFAULT_API_URL,
         max_retries: int = 3,
-        max_definitions: int = 3,
+        max_definitions: int = 2,
         language: str = "en",
         timeout: float = 10.0,
         backoff: float = 1.0,
