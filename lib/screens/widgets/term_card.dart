@@ -36,7 +36,7 @@ class TermCard extends StatelessWidget {
             ),
             // relativeScore: 1.00 = the top term. Use term.score for the raw TF-IDF value.
             Text(
-              'score ${term.relativeScore.toStringAsFixed(2)}',
+              'relevance ${(term.relativeScore * 100).round()}%',
               style: const TextStyle(fontSize: 9.5, color: AppColors.green),
             ),
           ],
