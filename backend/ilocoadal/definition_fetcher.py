@@ -19,6 +19,17 @@ def _bag(text: str) -> set[str]:
     """Word beginnings (5 letters), so thread / threads match."""
     return {w[:5] for w in _WORD.findall(text.lower()) if w not in _SKIP}
 
+_ITCS = frozenset(
+    "software computer computing program programming system data code network class "
+    "function algorithm memory process thread module instance structure variable "
+    "execution application database server client protocol".split()
+)
+
+
+def _itcs_hits(text: str) -> int:
+    words = re.findall(r"[a-z]+", text.lower())
+    return sum(1 for w in words if w in _ITCS or w[:-1] in _ITCS)
+
 class DefinitionFetcher:
     def __init__(
         self,
@@ -68,6 +79,9 @@ class DefinitionFetcher:
         if senses == [NOT_AVAILABLE]:
             return list(senses)
         if hint:
-            bag = _bag(hint)
-            senses = sorted(senses, key=lambda s: -len(bag & _bag(s)))  # ties keep dictionary order
-        return senses[: self.max_definitions]
+            own = _bag(key)                      # the term's own word proves nothing
+            bag = _bag(hint) - own
+            senses = sorted(
+                senses,
+                key=lambda s: -(len(bag & (_bag(s) - own)) + 2 * _itcs_hits(s)),
+            )
