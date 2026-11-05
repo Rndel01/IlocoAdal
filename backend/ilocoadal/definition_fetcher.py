@@ -85,3 +85,4 @@ class DefinitionFetcher:
                 senses,
                 key=lambda s: -(len(bag & (_bag(s) - own)) + 2 * _it_hits(s)),
             )
+        return senses[: self.max_definitions]
