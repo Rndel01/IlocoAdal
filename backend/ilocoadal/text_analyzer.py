@@ -28,6 +28,19 @@ _CODE = re.compile(r"[a-z]{2,}_[a-z]{2,}|/\*|\*/|\);|\)\s*\{|\bvoid\s+\*?\w+\(")
 def _is_code(s: str) -> bool:
     return bool(_CODE.search(s))
 
+_STEREO = re.compile(r"<<|>>|«|»")
+
+
+def _is_sentence(s: str) -> bool:
+    """Slide labels like "Track Order" or "<<access>>" are not sentences."""
+    words = s.split()
+    if len(words) < 5 or _STEREO.search(s):
+        return False
+    lead = [w for w in words if w[0].isalpha()]
+    if len(lead) >= 3 and sum(w[0].isupper() for w in lead) > 0.6 * len(lead):
+        return False   # Title Case heading
+    return s.rstrip()[-1] in ".!?:;" or len(words) >= 8
+
 class TextAnalyzer:
     """Ranks terms with TF-IDF and finds the sentences they appear in.
 
@@ -265,6 +278,7 @@ class TextAnalyzer:
                 if norm not in seen:
                     seen.add(norm)
                     matches.append(s)
+        matches = [s for s in matches if not _is_code(s) and _is_sentence(s)]   # program code is never a context
         lo, hi = self.context_min_length, self.context_max_length
 
         def badness(s: str) -> tuple:   # stable sort keeps document order
